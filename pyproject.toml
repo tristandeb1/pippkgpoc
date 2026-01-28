@@ -1,0 +1,50 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pip-pkg-poc"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Unlicense"
+license-files = ["LICENSE"]
+maintainers = [{name = "Example name", email = "dev-team@example.com"}]
+dynamic = ["version", "description"]
+
+[tool.scikit-build]
+ninja.make-fallback = false
+cmake.args = [
+    "-G", "Ninja",
+    "--toolchain", "vcpkg/scripts/buildsystems/vcpkg.cmake"
+]
+build-dir = "build/ninja-vcpkg"
+cmake.build-type = "Release"
+wheel.py-api = "py3"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "CMakeLists.txt"
+regex = 'project\(.*VERSION\s+(?P<value>\S+).*\)'
+
+[tool.scikit-build.metadata.description]
+provider = "scikit_build_core.metadata.regex"
+input = "README.md"
+regex = '(?P<value>.*)'
+
+[tool.cibuildwheel]
+build = "cp39-*"
+
+[tool.cibuildwheel.linux]
+before-all = [
+    "DEB_NEEDS='zip perl ninja-build'",
+    "FED_NEEDS='zip perl ninja-build'",
+    "ALP_NEEDS='zip perl gcompat'",
+    """\
+    apt-get install -y $DEB_NEEDS || \
+    dnf install -y $FED_NEEDS || \
+    (apk add --no-interactive $ALP_NEEDS && \
+    wget https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip && \
+    unzip ninja-linux.zip -d /usr/local/bin && \
+    rm ninja-linux.zip)\
+    """
+]
